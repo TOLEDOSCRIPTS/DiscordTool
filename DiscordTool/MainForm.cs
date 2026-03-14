@@ -1,8 +1,7 @@
 using System.Drawing;
 using System.Text;
-using DiscordTool.Discord;
+using DiscordTool;
 using Guna.UI2.WinForms;
-using Guna.UI2.WinForms.Enums;
 
 namespace DiscordTool;
 
@@ -84,7 +83,7 @@ public partial class MainForm : Form
 
         var titleLabel = new Guna2Label
         {
-            Text = "🔷 Discord Tool",
+            Text = "Discord Tool",
             Font = new Font("Segoe UI", 18, FontStyle.Bold),
             Location = new Point(20, 20),
             AutoSize = true
@@ -93,7 +92,7 @@ public partial class MainForm : Form
 
         var settingsLabel = new Guna2Label
         {
-            Text = "⚙️ Settings",
+            Text = "Settings",
             Font = new Font("Segoe UI", 12, FontStyle.Bold),
             Location = new Point(20, 70),
             AutoSize = true
@@ -159,7 +158,7 @@ public partial class MainForm : Form
 
         _connectionStatusLabel = new Guna2Label
         {
-            Text = "⚪ Not Connected",
+            Text = "Not Connected",
             Location = new Point(20, 310),
             AutoSize = true,
             ForeColor = Color.Gray
@@ -168,7 +167,7 @@ public partial class MainForm : Form
 
         var themeLabel = new Guna2Label
         {
-            Text = "🎨 Theme:",
+            Text = "Theme:",
             Location = new Point(20, 360),
             AutoSize = true
         };
@@ -187,7 +186,7 @@ public partial class MainForm : Form
 
         var formatLabel = new Guna2Label
         {
-            Text = "📖 Markdown Guide",
+            Text = "Markdown Guide",
             Font = new Font("Segoe UI", 12, FontStyle.Bold),
             Location = new Point(20, 450),
             AutoSize = true
@@ -231,8 +230,7 @@ public partial class MainForm : Form
         _tabControl = new Guna2TabControl
         {
             Dock = DockStyle.Fill,
-            Location = new Point(10, 10),
-            Style = TabStyle.Default
+            Location = new Point(10, 10)
         };
         _mainPanel.Controls.Add(_tabControl);
 
@@ -244,7 +242,7 @@ public partial class MainForm : Form
 
     private void SetupMessageTab()
     {
-        var messageTab = new Guna2TabPage { Text = "💬 Message" };
+        var messageTab = new Guna2TabPage { Text = "Message" };
         _tabControl.TabPages.Add(messageTab);
 
         var contentLabel = new Guna2Label
@@ -274,6 +272,14 @@ public partial class MainForm : Form
 
         SetupFormattingButtons();
         
+        var insertButtonsPanel = new Guna2Panel
+        {
+            Location = new Point(250, 260),
+            Size = new Size(570, 50)
+        };
+        messageTab.Controls.Add(insertButtonsPanel);
+        SetupInsertButtons(insertButtonsPanel);
+
         var previewLabel = new Guna2Label
         {
             Text = "Preview:",
@@ -305,12 +311,12 @@ public partial class MainForm : Form
         _messageContentTextBox.TextChanged += (s, e) =>
         {
             var formatted = DiscordMarkdown.FormatForPreview(_messageContentTextBox.Text);
-            previewRichTextBox.Rtf = formatted;
+            previewRichTextBox.Text = formatted;
         };
 
         _sendMessageButton = new Guna2Button
         {
-            Text = "📤 Send Message",
+            Text = "Send Message",
             Location = new Point(20, 510),
             Size = new Size(200, 50),
             FillColor = Color.FromArgb(88, 101, 242),
@@ -319,14 +325,6 @@ public partial class MainForm : Form
         };
         _sendMessageButton.Click += SendMessageButton_Click;
         messageTab.Controls.Add(_sendMessageButton);
-
-        var insertButtonsPanel = new Guna2Panel
-        {
-            Location = new Point(250, 260),
-            Size = new Size(570, 50)
-        };
-        messageTab.Controls.Add(insertButtonsPanel);
-        SetupInsertButtons(insertButtonsPanel);
     }
 
     private void SetupFormattingButtons()
@@ -356,7 +354,6 @@ public partial class MainForm : Form
                 FillColor = Color.FromArgb(70, 70, 70),
                 Font = new Font("Segoe UI", 8)
             };
-            int start = x;
             btn.Click += (s, e) => InsertMarkdown(prefix, suffix);
             _formattingPanel.Controls.Add(btn);
             x += 85;
@@ -370,8 +367,8 @@ public partial class MainForm : Form
             ("H1", "# "),
             ("H2", "## "),
             ("H3", "### "),
-            ("• List", "- "),
-            ("1. List", "1. "),
+            ("List", "- "),
+            ("Num List", "1. "),
             ("Block", ">>> ")
         };
 
@@ -428,7 +425,7 @@ public partial class MainForm : Form
 
     private void SetupEmbedTab()
     {
-        var embedTab = new Guna2TabPage { Text = "📑 Embed Builder" };
+        var embedTab = new Guna2TabPage { Text = "Embed Builder" };
         _tabControl.TabPages.Add(embedTab);
 
         int left = 20;
@@ -591,7 +588,7 @@ public partial class MainForm : Form
 
         _previewEmbedButton = new Guna2Button
         {
-            Text = "👁️ Preview Embed",
+            Text = "Preview Embed",
             Location = new Point(right, top),
             Size = new Size(150, 45),
             BorderRadius = 8,
@@ -602,7 +599,7 @@ public partial class MainForm : Form
 
         _sendEmbedButton = new Guna2Button
         {
-            Text = "📤 Send Embed",
+            Text = "Send Embed",
             Location = new Point(right + 160, top),
             Size = new Size(150, 45),
             BorderRadius = 8,
@@ -614,7 +611,7 @@ public partial class MainForm : Form
 
     private void SetupImageTab()
     {
-        var imageTab = new Guna2TabPage { Text = "🖼️ Image" };
+        var imageTab = new Guna2TabPage { Text = "Image" };
         _tabControl.TabPages.Add(imageTab);
 
         var urlLabel = new Guna2Label
@@ -635,7 +632,7 @@ public partial class MainForm : Form
 
         _loadImageButton = new Guna2Button
         {
-            Text = "📁 Browse",
+            Text = "Browse",
             Location = new Point(640, 45),
             Size = new Size(120, 40),
             BorderRadius = 8,
@@ -683,7 +680,7 @@ public partial class MainForm : Form
 
         _sendImageButton = new Guna2Button
         {
-            Text = "📤 Send Image",
+            Text = "Send Image",
             Location = new Point(450, 350),
             Size = new Size(200, 50),
             BorderRadius = 10,
@@ -696,7 +693,7 @@ public partial class MainForm : Form
 
     private void SetupRawTab()
     {
-        var rawTab = new Guna2TabPage { Text = "📝 Raw Output" };
+        var rawTab = new Guna2TabPage { Text = "Raw Output" };
         _tabControl.TabPages.Add(rawTab);
 
         var outputLabel = new Guna2Label
@@ -733,7 +730,7 @@ public partial class MainForm : Form
 
         _copyRawButton = new Guna2Button
         {
-            Text = "📋 Copy to Clipboard",
+            Text = "Copy to Clipboard",
             Location = new Point(0, 5),
             Size = new Size(180, 40),
             BorderRadius = 8,
@@ -751,7 +748,7 @@ public partial class MainForm : Form
 
         _clearOutputButton = new Guna2Button
         {
-            Text = "🗑️ Clear",
+            Text = "Clear",
             Location = new Point(190, 5),
             Size = new Size(120, 40),
             BorderRadius = 8,
@@ -845,13 +842,13 @@ public partial class MainForm : Form
         var embed = BuildEmbed();
         
         var sb = new StringBuilder();
-        sb.AppendLine("╔══════════════════════════════════════╗");
-        sb.AppendLine("║           EMBED PREVIEW               ║");
-        sb.AppendLine("╚══════════════════════════════════════╝");
+        sb.AppendLine("═══════════════════════════════════════");
+        sb.AppendLine("           EMBED PREVIEW               ");
+        sb.AppendLine("═══════════════════════════════════════");
         
         if (!string.IsNullOrEmpty(embed.Author?.Name))
         {
-            sb.AppendLine($"👤 {embed.Author.Name}");
+            sb.AppendLine($"Author: {embed.Author.Name}");
             sb.AppendLine(new string('─', 40));
         }
         
@@ -868,13 +865,11 @@ public partial class MainForm : Form
         if (embed.Fields.Count > 0)
         {
             sb.AppendLine();
-            int i = 0;
             foreach (var field in embed.Fields)
             {
                 sb.AppendLine($"**{field.Name}**");
                 sb.AppendLine(field.Value);
-                if (i < embed.Fields.Count - 1) sb.AppendLine();
-                i++;
+                sb.AppendLine();
             }
         }
         
@@ -882,7 +877,7 @@ public partial class MainForm : Form
         {
             sb.AppendLine();
             sb.AppendLine(new string('─', 40));
-            sb.AppendLine($"📝 {embed.Footer.Text}");
+            sb.AppendLine(embed.Footer.Text);
         }
         
         _rawOutputTextBox.Text = sb.ToString();
@@ -908,13 +903,13 @@ public partial class MainForm : Form
         try
         {
             _connectButton.Enabled = false;
-            _connectionStatusLabel.Text = "⏳ Connecting...";
+            _connectionStatusLabel.Text = "Connecting...";
             _connectionStatusLabel.ForeColor = Color.Yellow;
             
             _discordClient = new DiscordClient(token, channelId);
             await _discordClient.ConnectAsync();
             
-            _connectionStatusLabel.Text = "🟢 Connected";
+            _connectionStatusLabel.Text = "Connected";
             _connectionStatusLabel.ForeColor = Color.Green;
             _disconnectButton.Enabled = true;
             _connectButton.Enabled = false;
@@ -923,7 +918,7 @@ public partial class MainForm : Form
         }
         catch (Exception ex)
         {
-            _connectionStatusLabel.Text = "🔴 Connection Failed";
+            _connectionStatusLabel.Text = "Connection Failed";
             _connectionStatusLabel.ForeColor = Color.Red;
             _connectButton.Enabled = true;
             MessageBox.Show($"Failed to connect: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -938,7 +933,7 @@ public partial class MainForm : Form
             _discordClient = null;
         }
         
-        _connectionStatusLabel.Text = "⚪ Not Connected";
+        _connectionStatusLabel.Text = "Not Connected";
         _connectionStatusLabel.ForeColor = Color.Gray;
         _disconnectButton.Enabled = false;
         _connectButton.Enabled = true;
@@ -1089,7 +1084,7 @@ public partial class MainForm : Form
                 panelColor = Color.FromArgb(30, 50, 30);
                 accentColor = Color.FromArgb(80, 160, 80);
                 break;
-            default: // Dark
+            default:
                 bgColor = Color.FromArgb(30, 30, 30);
                 fgColor = Color.FromArgb(220, 220, 220);
                 panelColor = Color.FromArgb(40, 40, 40);
@@ -1103,38 +1098,26 @@ public partial class MainForm : Form
         _sidebarPanel.BackColor = panelColor;
         _mainPanel.BackColor = bgColor;
         
-        foreach (Control ctrl in this.Controls)
-        {
-            UpdateControlTheme(ctrl, bgColor, fgColor, panelColor, accentColor);
-        }
+        UpdateControlThemeRecursive(this, panelColor, accentColor);
     }
 
-    private void UpdateControlTheme(Control ctrl, Color bg, Color fg, Color panel, Color accent)
+    private void UpdateControlThemeRecursive(Control ctrl, Color panelColor, Color accentColor)
     {
-        if (ctrl is Guna2Panel panelCtrl)
-        {
-            panelCtrl.FillColor = panel;
-        }
-        else if (ctrl is Guna2Label label)
-        {
-            label.ForeColor = fg;
-        }
-        else if (ctrl is Guna2Button btn)
-        {
-            if (btn.FillColor == Color.FromArgb(88, 101, 242) || 
-                btn.FillColor == Color.FromArgb(235, 69, 69))
-            {
-                // Keep accent colors
-            }
-            else
-            {
-                btn.FillColor = panel;
-            }
-        }
-        
         foreach (Control child in ctrl.Controls)
         {
-            UpdateControlTheme(child, bg, fg, panel, accent);
+            if (child is Guna2Panel panel)
+            {
+                panel.FillColor = panelColor;
+            }
+            else if (child is Guna2Label label)
+            {
+                label.ForeColor = this.ForeColor;
+            }
+            
+            if (child.HasChildren)
+            {
+                UpdateControlThemeRecursive(child, panelColor, accentColor);
+            }
         }
     }
 
@@ -1145,7 +1128,7 @@ public partial class MainForm : Form
             Title = _embedTitleTextBox.Text,
             Description = _embedDescriptionTextBox.Text,
             Url = _embedUrlTextBox.Text,
-            Color = _embedColorPicker.Color,
+            Color = _embedColorPicker.Color.ToArgb(),
             Timestamp = _embedTimestampPicker.Value
         };
         
@@ -1212,9 +1195,9 @@ public partial class MainForm : Form
 
     private void GenerateMessageJson()
     {
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(
+        var json = JsonConvert.SerializeObject(
             new { content = _messageContentTextBox.Text },
-            Newtonsoft.Json.Formatting.Indented
+            Formatting.Indented
         );
         _rawOutputTextBox.Text = json;
     }
@@ -1222,9 +1205,9 @@ public partial class MainForm : Form
     private void GenerateEmbedJson()
     {
         var embed = BuildEmbed();
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(
+        var json = JsonConvert.SerializeObject(
             new { embeds = new[] { embed } },
-            Newtonsoft.Json.Formatting.Indented
+            Formatting.Indented
         );
         _rawOutputTextBox.Text = json;
     }

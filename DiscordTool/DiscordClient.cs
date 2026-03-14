@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace DiscordTool.Discord;
+namespace DiscordTool;
 
 public class DiscordClient
 {
@@ -24,23 +24,10 @@ public class DiscordClient
 
     public async Task ConnectAsync()
     {
-        try
-        {
-            var response = await _httpClient.GetAsync($"https://discord.com/api/v10/channels/{_channelId}");
-            if (response.IsSuccessStatusCode)
-            {
-                _isConnected = true;
-            }
-            else
-            {
-                throw new Exception($"Failed to connect: {response.StatusCode}");
-            }
-        }
-        catch
-        {
-            _isConnected = false;
-            throw;
-        }
+        var response = await _httpClient.GetAsync($"https://discord.com/api/v10/channels/{_channelId}");
+        _isConnected = response.IsSuccessStatusCode;
+        if (!_isConnected)
+            throw new Exception($"Failed to connect: {response.StatusCode}");
     }
 
     public async Task DisconnectAsync()
@@ -81,7 +68,7 @@ public class DiscordClient
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed to send message: {response.StatusCode} - {errorContent}");
+            throw new Exception($"Failed to send: {response.StatusCode} - {errorContent}");
         }
     }
 }
