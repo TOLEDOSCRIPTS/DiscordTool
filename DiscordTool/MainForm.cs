@@ -1,238 +1,100 @@
 using System.Drawing;
+using System.Net.Http;
 using System.Text;
-using DiscordTool;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Guna.UI2.WinForms;
 
 namespace DiscordTool;
 
 public partial class MainForm : Form
 {
-    private Guna2Panel _sidebarPanel = null!;
-    private Guna2Panel _mainPanel = null!;
-    private Guna2TabControl _tabControl = null!;
-    private Guna2ComboBox _themeComboBox = null!;
-    private Guna2TextBox _botTokenTextBox = null!;
-    private Guna2TextBox _channelIdTextBox = null!;
-    private Guna2Button _connectButton = null!;
-    private Guna2Button _disconnectButton = null!;
-    private Guna2Label _connectionStatusLabel = null!;
+    private Guna2Panel sidebar = null!;
+    private Guna2Panel mainP = null!;
+    private Guna2TabControl tabs = null!;
+    private Guna2ComboBox themeC = null!;
+    private Guna2TextBox tokenTxt = null!;
+    private Guna2TextBox channelTxt = null!;
+    private Guna2Button connectBtn = null!;
+    private Guna2Button disconnectBtn = null!;
+    private Guna2Label statusLbl = null!;
+    private Guna2TextBox msgTxt = null!;
+    private Guna2Button sendBtn = null!;
+    private Guna2TextBox embedTitle = null!;
+    private Guna2TextBox embedDesc = null!;
+    private Guna2TextBox embedUrl = null!;
+    private Guna2TextBox embedFooter = null!;
+    private Guna2TextBox embedAuthor = null!;
+    private Guna2ColorPicker embedColor = null!;
+    private Guna2Button sendEmbedBtn = null!;
+    private Guna2TextBox imgUrl = null!;
+    private Guna2PictureBox imgPreview = null!;
+    private Guna2Button sendImgBtn = null!;
+    private Guna2TextBox rawOut = null!;
     
-    private Guna2TextBox _messageContentTextBox = null!;
-    private Guna2Button _sendMessageButton = null!;
-    private Guna2Panel _formattingPanel = null!;
-    
-    private Guna2TextBox _embedTitleTextBox = null!;
-    private Guna2TextBox _embedDescriptionTextBox = null!;
-    private Guna2TextBox _embedUrlTextBox = null!;
-    private Guna2TextBox _embedFooterTextBox = null!;
-    private Guna2TextBox _embedFooterIconTextBox = null!;
-    private Guna2TextBox _embedAuthorTextBox = null!;
-    private Guna2TextBox _embedAuthorIconTextBox = null!;
-    private Guna2TextBox _embedThumbnailUrlTextBox = null!;
-    private Guna2TextBox _embedImageUrlTextBox = null!;
-    private Guna2ColorPicker _embedColorPicker = null!;
-    private Guna2DateTimePicker _embedTimestampPicker = null!;
-    private Guna2Button _addEmbedFieldButton = null!;
-    private Guna2Panel _embedFieldsPanel = null!;
-    private Guna2Button _sendEmbedButton = null!;
-    private Guna2Button _previewEmbedButton = null!;
-    
-    private Guna2TextBox _imageUrlTextBox = null!;
-    private Guna2Button _loadImageButton = null!;
-    private Guna2PictureBox _imagePreviewBox = null!;
-    private Guna2TextBox _imageCaptionTextBox = null!;
-    private Guna2Button _sendImageButton = null!;
-    
-    private Guna2Panel _rawOutputPanel = null!;
-    private Guna2TextBox _rawOutputTextBox = null!;
-    private Guna2Button _copyRawButton = null!;
-    private Guna2Button _clearOutputButton = null!;
-    
-    private DiscordClient? _discordClient;
-    private readonly List<EmbedField> _embedFields = new();
-    private string _currentTheme = "Dark";
+    private HttpClient http = new();
+    private string token = "";
+    private ulong channelId;
+    private bool connected;
+    private string currentTheme = "Dark";
     
     public MainForm()
     {
         InitializeComponent();
-        SetupForm();
+        SetupUI();
     }
 
-    private void SetupForm()
+    private void SetupUI()
     {
-        this.Text = "Discord Message & Embed Tool";
-        this.Size = new Size(1400, 900);
+        this.Text = "Discord Tool";
+        this.Size = new Size(1200, 800);
         this.StartPosition = FormStartPosition.CenterScreen;
-        this.FormBorderStyle = FormBorderStyle.Sizable;
-        this.MinimumSize = new Size(1200, 700);
-        
-        SetupSidebar();
-        SetupMainContent();
-        ApplyTheme("Dark");
-    }
+        this.BackColor = Color.FromArgb(30, 30, 30);
+        this.ForeColor = Color.White;
 
-    private void SetupSidebar()
-    {
-        _sidebarPanel = new Guna2Panel
-        {
-            Dock = DockStyle.Left,
-            Width = 280,
-            Padding = new Padding(10)
-        };
-        this.Controls.Add(_sidebarPanel);
+        sidebar = new Guna2Panel { Dock = DockStyle.Left, Width = 260, FillColor = Color.FromArgb(40, 40, 40) };
+        this.Controls.Add(sidebar);
 
-        var titleLabel = new Guna2Label
-        {
-            Text = "Discord Tool",
-            Font = new Font("Segoe UI", 18, FontStyle.Bold),
-            Location = new Point(20, 20),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(titleLabel);
+        var title = new Guna2Label { Text = "Discord Tool", Font = new Font("Segoe UI", 16, FontStyle.Bold), Location = new Point(20, 20), ForeColor = Color.White };
+        sidebar.Controls.Add(title);
 
-        var settingsLabel = new Guna2Label
-        {
-            Text = "Settings",
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            Location = new Point(20, 70),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(settingsLabel);
+        var tLabel = new Guna2Label { Text = "Bot Token:", Location = new Point(20, 70), ForeColor = Color.White };
+        sidebar.Controls.Add(tLabel);
 
-        var tokenLabel = new Guna2Label
-        {
-            Text = "Bot Token:",
-            Location = new Point(20, 110),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(tokenLabel);
+        tokenTxt = new Guna2TextBox { Location = new Point(20, 95), Size = new Size(220, 35), PlaceholderText = "Enter bot token...", PasswordChar = '*' };
+        sidebar.Controls.Add(tokenTxt);
 
-        _botTokenTextBox = new Guna2TextBox
-        {
-            Location = new Point(20, 135),
-            Size = new Size(240, 40),
-            PlaceholderText = "Enter your bot token...",
-            PasswordChar = '*',
-            UseSystemPasswordChar = true
-        };
-        _sidebarPanel.Controls.Add(_botTokenTextBox);
+        var cLabel = new Guna2Label { Text = "Channel ID:", Location = new Point(20, 140), ForeColor = Color.White };
+        sidebar.Controls.Add(cLabel);
 
-        var channelLabel = new Guna2Label
-        {
-            Text = "Channel ID:",
-            Location = new Point(20, 185),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(channelLabel);
+        channelTxt = new Guna2TextBox { Location = new Point(20, 165), Size = new Size(220, 35), PlaceholderText = "Channel ID..." };
+        sidebar.Controls.Add(channelTxt);
 
-        _channelIdTextBox = new Guna2TextBox
-        {
-            Location = new Point(20, 210),
-            Size = new Size(240, 40),
-            PlaceholderText = "Enter channel ID..."
-        };
-        _sidebarPanel.Controls.Add(_channelIdTextBox);
+        connectBtn = new Guna2Button { Text = "Connect", Location = new Point(20, 210), Size = new Size(100, 35), FillColor = Color.FromArgb(88, 101, 242), BorderRadius = 6 };
+        connectBtn.Click += Connect;
+        sidebar.Controls.Add(connectBtn);
 
-        _connectButton = new Guna2Button
-        {
-            Text = "Connect",
-            Location = new Point(20, 260),
-            Size = new Size(110, 40),
-            FillColor = Color.FromArgb(88, 101, 242),
-            BorderRadius = 8
-        };
-        _connectButton.Click += ConnectButton_Click;
-        _sidebarPanel.Controls.Add(_connectButton);
+        disconnectBtn = new Guna2Button { Text = "Disconnect", Location = new Point(130, 210), Size = new Size(100, 35), FillColor = Color.FromArgb(235, 69, 69), BorderRadius = 6, Enabled = false };
+        disconnectBtn.Click += Disconnect;
+        sidebar.Controls.Add(disconnectBtn);
 
-        _disconnectButton = new Guna2Button
-        {
-            Text = "Disconnect",
-            Location = new Point(150, 260),
-            Size = new Size(110, 40),
-            FillColor = Color.FromArgb(235, 69, 69),
-            BorderRadius = 8,
-            Enabled = false
-        };
-        _disconnectButton.Click += DisconnectButton_Click;
-        _sidebarPanel.Controls.Add(_disconnectButton);
+        statusLbl = new Guna2Label { Text = "Not Connected", Location = new Point(20, 255), ForeColor = Color.Gray };
+        sidebar.Controls.Add(statusLbl);
 
-        _connectionStatusLabel = new Guna2Label
-        {
-            Text = "Not Connected",
-            Location = new Point(20, 310),
-            AutoSize = true,
-            ForeColor = Color.Gray
-        };
-        _sidebarPanel.Controls.Add(_connectionStatusLabel);
+        var thLabel = new Guna2Label { Text = "Theme:", Location = new Point(20, 300), ForeColor = Color.White };
+        sidebar.Controls.Add(thLabel);
 
-        var themeLabel = new Guna2Label
-        {
-            Text = "Theme:",
-            Location = new Point(20, 360),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(themeLabel);
+        themeC = new Guna2ComboBox { Location = new Point(20, 325), Size = new Size(220, 35), DropDownStyle = ComboBoxStyle.DropDownList };
+        themeC.Items.AddRange(new[] { "Dark", "Light", "Midnight", "Ocean", "Forest" });
+        themeC.SelectedIndex = 0;
+        themeC.SelectedIndexChanged += (s, e) => ApplyTheme(themeC.SelectedItem?.ToString() ?? "Dark");
+        sidebar.Controls.Add(themeC);
 
-        _themeComboBox = new Guna2ComboBox
-        {
-            Location = new Point(20, 385),
-            Size = new Size(240, 40),
-            DropDownStyle = ComboBoxStyle.DropDownList
-        };
-        _themeComboBox.Items.AddRange(new[] { "Dark", "Light", "Midnight", "Ocean", "Forest" });
-        _themeComboBox.SelectedIndex = 0;
-        _themeComboBox.SelectedIndexChanged += ThemeComboBox_SelectedIndexChanged;
-        _sidebarPanel.Controls.Add(_themeComboBox);
+        mainP = new Guna2Panel { Dock = DockStyle.Fill, FillColor = Color.FromArgb(30, 30, 30) };
+        this.Controls.Add(mainP);
 
-        var formatLabel = new Guna2Label
-        {
-            Text = "Markdown Guide",
-            Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            Location = new Point(20, 450),
-            AutoSize = true
-        };
-        _sidebarPanel.Controls.Add(formatLabel);
-
-        var guideText = @"**bold** or __bold__
-*italic* or _italic_
-***bold italic***
-~~strikethrough~~
-||spoiler||
-# Header 1
-## Header 2
-### Header 3
-> Block Quote
-```code block```
-[text](url)
-- List item
-1. Numbered list";
-
-        var guideLabel = new Guna2Label
-        {
-            Text = guideText,
-            Location = new Point(20, 480),
-            AutoSize = false,
-            Size = new Size(240, 200),
-            Font = new Font("Consolas", 9)
-        };
-        _sidebarPanel.Controls.Add(guideLabel);
-    }
-
-    private void SetupMainContent()
-    {
-        _mainPanel = new Guna2Panel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(10)
-        };
-        this.Controls.Add(_mainPanel);
-
-        _tabControl = new Guna2TabControl
-        {
-            Dock = DockStyle.Fill,
-            Location = new Point(10, 10)
-        };
-        _mainPanel.Controls.Add(_tabControl);
+        tabs = new Guna2TabControl { Dock = DockStyle.Fill, Location = new Point(10, 10) };
+        mainP.Controls.Add(tabs);
 
         SetupMessageTab();
         SetupEmbedTab();
@@ -242,979 +104,222 @@ public partial class MainForm : Form
 
     private void SetupMessageTab()
     {
-        var messageTab = new Guna2TabPage { Text = "Message" };
-        _tabControl.TabPages.Add(messageTab);
+        var tab = new Guna2TabPage { Text = "Message" };
+        tabs.TabPages.Add(tab);
 
-        var contentLabel = new Guna2Label
-        {
-            Text = "Message Content:",
-            Location = new Point(20, 20),
-            AutoSize = true
-        };
-        messageTab.Controls.Add(contentLabel);
+        var lbl = new Guna2Label { Text = "Message:", Location = new Point(20, 20), ForeColor = Color.White };
+        tab.Controls.Add(lbl);
 
-        _messageContentTextBox = new Guna2TextBox
-        {
-            Location = new Point(20, 50),
-            Size = new Size(800, 200),
-            Multiline = true,
-            PlaceholderText = "Enter your Discord message here...",
-            ScrollBars = ScrollBars.Vertical
-        };
-        messageTab.Controls.Add(_messageContentTextBox);
+        msgTxt = new Guna2TextBox { Location = new Point(20, 50), Size = new Size(600, 200), Multiline = true, PlaceholderText = "Type your message...", ScrollBars = ScrollBars.Vertical };
+        tab.Controls.Add(msgTxt);
 
-        _formattingPanel = new Guna2Panel
-        {
-            Location = new Point(20, 260),
-            Size = new Size(800, 50)
-        };
-        messageTab.Controls.Add(_formattingPanel);
+        var fmtPanel = new Guna2Panel { Location = new Point(20, 260), Size = new Size(600, 40) };
+        tab.Controls.Add(fmtPanel);
 
-        SetupFormattingButtons();
-        
-        var insertButtonsPanel = new Guna2Panel
-        {
-            Location = new Point(250, 260),
-            Size = new Size(570, 50)
-        };
-        messageTab.Controls.Add(insertButtonsPanel);
-        SetupInsertButtons(insertButtonsPanel);
-
-        var previewLabel = new Guna2Label
-        {
-            Text = "Preview:",
-            Location = new Point(20, 320),
-            AutoSize = true
-        };
-        messageTab.Controls.Add(previewLabel);
-
-        var previewBox = new Guna2Panel
-        {
-            Location = new Point(20, 345),
-            Size = new Size(800, 150),
-            BorderStyle = BorderStyle.FixedSingle,
-            BackColor = Color.FromArgb(54, 57, 63)
-        };
-        
-        var previewRichTextBox = new RichTextBox
-        {
-            Dock = DockStyle.Fill,
-            BackColor = Color.FromArgb(54, 57, 63),
-            ForeColor = Color.White,
-            ReadOnly = true,
-            Font = new Font("Segoe UI", 11),
-            WordWrap = true
-        };
-        previewBox.Controls.Add(previewRichTextBox);
-        messageTab.Controls.Add(previewBox);
-
-        _messageContentTextBox.TextChanged += (s, e) =>
-        {
-            var formatted = DiscordMarkdown.FormatForPreview(_messageContentTextBox.Text);
-            previewRichTextBox.Text = formatted;
-        };
-
-        _sendMessageButton = new Guna2Button
-        {
-            Text = "Send Message",
-            Location = new Point(20, 510),
-            Size = new Size(200, 50),
-            FillColor = Color.FromArgb(88, 101, 242),
-            BorderRadius = 10,
-            Font = new Font("Segoe UI", 12, FontStyle.Bold)
-        };
-        _sendMessageButton.Click += SendMessageButton_Click;
-        messageTab.Controls.Add(_sendMessageButton);
-    }
-
-    private void SetupFormattingButtons()
-    {
-        var buttons = new[]
-        {
-            ("Bold", "**", "**"),
-            ("Italic", "*", "*"),
-            ("Underline", "__", "__"),
-            ("Strike", "~~", "~~"),
-            ("Spoiler", "||", "||"),
-            ("Code", "`", "`"),
-            ("Code Block", "```\n", "\n```"),
-            ("Quote", "> ", ""),
-            ("Link", "[", "](url)")
-        };
-
+        string[] btns = { "B", "I", "U", "S", "Spoiler", "Code", "Link" };
+        string[] fmts = { "**", "*", "__", "~~", "||", "`", "[]" };
         int x = 0;
-        foreach (var (label, prefix, suffix) in buttons)
+        for (int i = 0; i < btns.Length; i++)
         {
-            var btn = new Guna2Button
-            {
-                Text = label,
-                Location = new Point(x, 0),
-                Size = new Size(80, 40),
-                BorderRadius = 5,
-                FillColor = Color.FromArgb(70, 70, 70),
-                Font = new Font("Segoe UI", 8)
-            };
-            btn.Click += (s, e) => InsertMarkdown(prefix, suffix);
-            _formattingPanel.Controls.Add(btn);
-            x += 85;
+            var btn = new Guna2Button { Text = btns[i], Location = new Point(x, 0), Size = new Size(75, 35), BorderRadius = 4, FillColor = Color.FromArgb(60, 60, 60) };
+            int fi = i;
+            btn.Click += (s, e) => InsertFmt(fmts[fi]);
+            fmtPanel.Controls.Add(btn);
+            x += 80;
         }
+
+        sendBtn = new Guna2Button { Text = "Send", Location = new Point(20, 320), Size = new Size(150, 40), FillColor = Color.FromArgb(88, 101, 242), BorderRadius = 6 };
+        sendBtn.Click += SendMessage;
+        tab.Controls.Add(sendBtn);
     }
 
-    private void SetupInsertButtons(Guna2Panel panel)
+    private void InsertFmt(string f)
     {
-        var buttons = new[]
-        {
-            ("H1", "# "),
-            ("H2", "## "),
-            ("H3", "### "),
-            ("List", "- "),
-            ("Num List", "1. "),
-            ("Block", ">>> ")
-        };
-
-        int x = 0;
-        foreach (var (label, prefix) in buttons)
-        {
-            var btn = new Guna2Button
-            {
-                Text = label,
-                Location = new Point(x, 0),
-                Size = new Size(85, 40),
-                BorderRadius = 5,
-                FillColor = Color.FromArgb(60, 60, 60),
-                Font = new Font("Segoe UI", 8)
-            };
-            btn.Click += (s, e) => InsertAtLineStart(prefix);
-            panel.Controls.Add(btn);
-            x += 90;
-        }
-    }
-
-    private void InsertMarkdown(string prefix, string suffix)
-    {
-        var tb = _messageContentTextBox;
-        int start = tb.SelectionStart;
-        int length = tb.SelectionLength;
-        
-        if (length > 0)
-        {
-            var selected = tb.SelectedText;
-            tb.Text = tb.Text.Insert(start, prefix + selected + suffix);
-            tb.SelectionStart = start + prefix.Length;
-            tb.SelectionLength = length;
-        }
-        else
-        {
-            tb.Text = tb.Text.Insert(start, prefix + suffix);
-            tb.SelectionStart = start + prefix.Length;
-        }
-        tb.Focus();
-    }
-
-    private void InsertAtLineStart(string prefix)
-    {
-        var tb = _messageContentTextBox;
-        int pos = tb.SelectionStart;
-        
-        int lineStart = tb.Text.LastIndexOf('\n', Math.Max(0, pos - 1)) + 1;
-        
-        tb.Text = tb.Text.Insert(lineStart, prefix);
-        tb.SelectionStart = pos + prefix.Length;
-        tb.Focus();
+        int p = msgTxt.SelectionStart;
+        string t = msgTxt.SelectedText;
+        msgTxt.Text = msgTxt.Text.Insert(p, f + t + (f == "[]" ? "(url)" : f));
+        msgTxt.SelectionStart = p + f.Length;
     }
 
     private void SetupEmbedTab()
     {
-        var embedTab = new Guna2TabPage { Text = "Embed Builder" };
-        _tabControl.TabPages.Add(embedTab);
+        var tab = new Guna2TabPage { Text = "Embed" };
+        tabs.TabPages.Add(tab);
 
-        int left = 20;
-        int top = 20;
-        int width = 380;
+        int y = 20;
 
-        var titleLabel = new Guna2Label { Text = "Title:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(titleLabel);
-        
-        _embedTitleTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 20),
-            Size = new Size(width, 35),
-            PlaceholderText = "Embed title..."
-        };
-        embedTab.Controls.Add(_embedTitleTextBox);
-        top += 60;
+        tab.Controls.Add(new Guna2Label { Text = "Title:", Location = new Point(20, y), ForeColor = Color.White });
+        embedTitle = new Guna2TextBox { Location = new Point(20, y + 25), Size = new Size(350, 35), PlaceholderText = "Title..." };
+        tab.Controls.Add(embedTitle);
+        y += 65;
 
-        var descLabel = new Guna2Label { Text = "Description:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(descLabel);
-        
-        _embedDescriptionTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 20),
-            Size = new Size(width, 120),
-            Multiline = true,
-            PlaceholderText = "Embed description...",
-            ScrollBars = ScrollBars.Vertical
-        };
-        embedTab.Controls.Add(_embedDescriptionTextBox);
-        top += 150;
+        tab.Controls.Add(new Guna2Label { Text = "Description:", Location = new Point(20, y), ForeColor = Color.White });
+        embedDesc = new Guna2TextBox { Location = new Point(20, y + 25), Size = new Size(350, 100), Multiline = true, PlaceholderText = "Description..." };
+        tab.Controls.Add(embedDesc);
+        y += 135;
 
-        var urlLabel = new Guna2Label { Text = "Title URL:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(urlLabel);
-        
-        _embedUrlTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 20),
-            Size = new Size(width, 35),
-            PlaceholderText = "https://..."
-        };
-        embedTab.Controls.Add(_embedUrlTextBox);
-        top += 60;
+        tab.Controls.Add(new Guna2Label { Text = "Color:", Location = new Point(20, y), ForeColor = Color.White });
+        embedColor = new Guna2ColorPicker { Location = new Point(80, y - 3), Size = new Size(100, 30) };
+        embedColor.Color = Color.FromArgb(88, 101, 242);
+        tab.Controls.Add(embedColor);
+        y += 45;
 
-        var colorLabel = new Guna2Label { Text = "Color:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(colorLabel);
-        
-        _embedColorPicker = new Guna2ColorPicker
-        {
-            Location = new Point(left + 60, top - 3),
-            Size = new Size(100, 30)
-        };
-        _embedColorPicker.Color = Color.FromArgb(88, 101, 242);
-        embedTab.Controls.Add(_embedColorPicker);
-        top += 45;
+        tab.Controls.Add(new Guna2Label { Text = "Footer:", Location = new Point(20, y), ForeColor = Color.White });
+        embedFooter = new Guna2TextBox { Location = new Point(20, y + 25), Size = new Size(350, 35), PlaceholderText = "Footer text..." };
+        tab.Controls.Add(embedFooter);
+        y += 65;
 
-        var timestampLabel = new Guna2Label { Text = "Timestamp:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(timestampLabel);
-        
-        _embedTimestampPicker = new Guna2DateTimePicker
-        {
-            Location = new Point(left + 100, top - 3),
-            Size = new Size(200, 30),
-            Value = DateTime.Now
-        };
-        embedTab.Controls.Add(_embedTimestampPicker);
-        top += 50;
+        tab.Controls.Add(new Guna2Label { Text = "Author:", Location = new Point(20, y), ForeColor = Color.White });
+        embedAuthor = new Guna2TextBox { Location = new Point(20, y + 25), Size = new Size(350, 35), PlaceholderText = "Author name..." };
+        tab.Controls.Add(embedAuthor);
 
-        var authorLabel = new Guna2Label { Text = "Author:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(authorLabel);
-        
-        _embedAuthorTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 20),
-            Size = new Size(width, 35),
-            PlaceholderText = "Author name..."
-        };
-        embedTab.Controls.Add(_embedAuthorTextBox);
-        
-        _embedAuthorIconTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 60),
-            Size = new Size(width, 35),
-            PlaceholderText = "Author icon URL..."
-        };
-        embedTab.Controls.Add(_embedAuthorIconTextBox);
-        top += 110;
-
-        var footerLabel = new Guna2Label { Text = "Footer:", Location = new Point(left, top), AutoSize = true };
-        embedTab.Controls.Add(footerLabel);
-        
-        _embedFooterTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 20),
-            Size = new Size(width, 35),
-            PlaceholderText = "Footer text..."
-        };
-        embedTab.Controls.Add(_embedFooterTextBox);
-        
-        _embedFooterIconTextBox = new Guna2TextBox
-        {
-            Location = new Point(left, top + 60),
-            Size = new Size(width, 35),
-            PlaceholderText = "Footer icon URL..."
-        };
-        embedTab.Controls.Add(_embedFooterIconTextBox);
-        top += 110;
-
-        int right = 450;
-        top = 20;
-
-        var imageLabel = new Guna2Label { Text = "Images:", Location = new Point(right, top), AutoSize = true };
-        embedTab.Controls.Add(imageLabel);
-        
-        var thumbLabel = new Guna2Label { Text = "Thumbnail URL:", Location = new Point(right, top + 25), AutoSize = true };
-        embedTab.Controls.Add(thumbLabel);
-        
-        _embedThumbnailUrlTextBox = new Guna2TextBox
-        {
-            Location = new Point(right, top + 45),
-            Size = new Size(400, 35),
-            PlaceholderText = "https://..."
-        };
-        embedTab.Controls.Add(_embedThumbnailUrlTextBox);
-        
-        var imgLabel = new Guna2Label { Text = "Image URL:", Location = new Point(right, top + 85), AutoSize = true };
-        embedTab.Controls.Add(imgLabel);
-        
-        _embedImageUrlTextBox = new Guna2TextBox
-        {
-            Location = new Point(right, top + 105),
-            Size = new Size(400, 35),
-            PlaceholderText = "https://..."
-        };
-        embedTab.Controls.Add(_embedImageUrlTextBox);
-        top += 160;
-
-        var fieldsLabel = new Guna2Label { Text = "Fields:", Location = new Point(right, top), AutoSize = true };
-        embedTab.Controls.Add(fieldsLabel);
-        
-        _addEmbedFieldButton = new Guna2Button
-        {
-            Text = "+ Add Field",
-            Location = new Point(right + 70, top - 5),
-            Size = new Size(100, 30),
-            BorderRadius = 5,
-            FillColor = Color.FromArgb(70, 70, 70)
-        };
-        _addEmbedFieldButton.Click += AddEmbedFieldButton_Click;
-        embedTab.Controls.Add(_addEmbedFieldButton);
-        
-        _embedFieldsPanel = new Guna2Panel
-        {
-            Location = new Point(right, top + 30),
-            Size = new Size(400, 200),
-            AutoScroll = true
-        };
-        embedTab.Controls.Add(_embedFieldsPanel);
-        top += 240;
-
-        _previewEmbedButton = new Guna2Button
-        {
-            Text = "Preview Embed",
-            Location = new Point(right, top),
-            Size = new Size(150, 45),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(70, 70, 70)
-        };
-        _previewEmbedButton.Click += PreviewEmbedButton_Click;
-        embedTab.Controls.Add(_previewEmbedButton);
-
-        _sendEmbedButton = new Guna2Button
-        {
-            Text = "Send Embed",
-            Location = new Point(right + 160, top),
-            Size = new Size(150, 45),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(88, 101, 242)
-        };
-        _sendEmbedButton.Click += SendEmbedButton_Click;
-        embedTab.Controls.Add(_sendEmbedButton);
+        sendEmbedBtn = new Guna2Button { Text = "Send Embed", Location = new Point(20, 450), Size = new Size(150, 40), FillColor = Color.FromArgb(88, 101, 242), BorderRadius = 6 };
+        sendEmbedBtn.Click += SendEmbed;
+        tab.Controls.Add(sendEmbedBtn);
     }
 
     private void SetupImageTab()
     {
-        var imageTab = new Guna2TabPage { Text = "Image" };
-        _tabControl.TabPages.Add(imageTab);
+        var tab = new Guna2TabPage { Text = "Image" };
+        tabs.TabPages.Add(tab);
 
-        var urlLabel = new Guna2Label
-        {
-            Text = "Image URL:",
-            Location = new Point(20, 20),
-            AutoSize = true
-        };
-        imageTab.Controls.Add(urlLabel);
+        tab.Controls.Add(new Guna2Label { Text = "Image URL:", Location = new Point(20, 20), ForeColor = Color.White });
 
-        _imageUrlTextBox = new Guna2TextBox
-        {
-            Location = new Point(20, 45),
-            Size = new Size(600, 40),
-            PlaceholderText = "Enter image URL or browse file..."
-        };
-        imageTab.Controls.Add(_imageUrlTextBox);
+        imgUrl = new Guna2TextBox { Location = new Point(20, 50), Size = new Size(500, 35), PlaceholderText = "https://..." };
+        imgUrl.TextChanged += (s, e) => { try { imgPreview.LoadAsync(imgUrl.Text); } catch { } };
+        tab.Controls.Add(imgUrl);
 
-        _loadImageButton = new Guna2Button
-        {
-            Text = "Browse",
-            Location = new Point(640, 45),
-            Size = new Size(120, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(70, 70, 70)
-        };
-        _loadImageButton.Click += LoadImageButton_Click;
-        imageTab.Controls.Add(_loadImageButton);
+        imgPreview = new Guna2PictureBox { Location = new Point(20, 100), Size = new Size(350, 250), BorderStyle = BorderStyle.FixedSingle, SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.FromArgb(40, 40, 40) };
+        tab.Controls.Add(imgPreview);
 
-        var previewLabel = new Guna2Label
-        {
-            Text = "Preview:",
-            Location = new Point(20, 100),
-            AutoSize = true
-        };
-        imageTab.Controls.Add(previewLabel);
-
-        _imagePreviewBox = new Guna2PictureBox
-        {
-            Location = new Point(20, 125),
-            Size = new Size(400, 300),
-            BorderStyle = BorderStyle.FixedSingle,
-            SizeMode = PictureBoxSizeMode.Zoom,
-            BackColor = Color.FromArgb(40, 40, 40)
-        };
-        imageTab.Controls.Add(_imagePreviewBox);
-
-        _imageUrlTextBox.TextChanged += (s, e) => LoadImagePreview();
-
-        var captionLabel = new Guna2Label
-        {
-            Text = "Caption (optional):",
-            Location = new Point(450, 100),
-            AutoSize = true
-        };
-        imageTab.Controls.Add(captionLabel);
-
-        _imageCaptionTextBox = new Guna2TextBox
-        {
-            Location = new Point(450, 125),
-            Size = new Size(400, 100),
-            Multiline = true,
-            PlaceholderText = "Add a caption with Discord formatting..."
-        };
-        imageTab.Controls.Add(_imageCaptionTextBox);
-
-        _sendImageButton = new Guna2Button
-        {
-            Text = "Send Image",
-            Location = new Point(450, 350),
-            Size = new Size(200, 50),
-            BorderRadius = 10,
-            FillColor = Color.FromArgb(88, 101, 242),
-            Font = new Font("Segoe UI", 12, FontStyle.Bold)
-        };
-        _sendImageButton.Click += SendImageButton_Click;
-        imageTab.Controls.Add(_sendImageButton);
+        sendImgBtn = new Guna2Button { Text = "Send Image", Location = new Point(20, 370), Size = new Size(150, 40), FillColor = Color.FromArgb(88, 101, 242), BorderRadius = 6 };
+        sendImgBtn.Click += SendImage;
+        tab.Controls.Add(sendImgBtn);
     }
 
     private void SetupRawTab()
     {
-        var rawTab = new Guna2TabPage { Text = "Raw Output" };
-        _tabControl.TabPages.Add(rawTab);
+        var tab = new Guna2TabPage { Text = "Raw" };
+        tabs.TabPages.Add(tab);
 
-        var outputLabel = new Guna2Label
-        {
-            Text = "Generated JSON / Markdown:",
-            Location = new Point(20, 20),
-            AutoSize = true
-        };
-        rawTab.Controls.Add(outputLabel);
+        rawOut = new Guna2TextBox { Dock = DockStyle.Fill, Multiline = true, Font = new Font("Consolas", 10), PlaceholderText = "Raw output..." };
+        tab.Controls.Add(rawOut);
 
-        _rawOutputPanel = new Guna2Panel
-        {
-            Location = new Point(20, 50),
-            Size = new Size(1000, 450)
-        };
-        rawTab.Controls.Add(_rawOutputPanel);
-
-        _rawOutputTextBox = new Guna2TextBox
-        {
-            Dock = DockStyle.Fill,
-            Multiline = true,
-            ScrollBars = ScrollBars.Both,
-            Font = new Font("Consolas", 10),
-            PlaceholderText = "Raw output will appear here..."
-        };
-        _rawOutputPanel.Controls.Add(_rawOutputTextBox);
-
-        var buttonPanel = new Guna2Panel
-        {
-            Location = new Point(20, 520),
-            Size = new Size(1000, 50)
-        };
-        rawTab.Controls.Add(buttonPanel);
-
-        _copyRawButton = new Guna2Button
-        {
-            Text = "Copy to Clipboard",
-            Location = new Point(0, 5),
-            Size = new Size(180, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(70, 70, 70)
-        };
-        _copyRawButton.Click += (s, e) =>
-        {
-            if (!string.IsNullOrEmpty(_rawOutputTextBox.Text))
-            {
-                Clipboard.SetText(_rawOutputTextBox.Text);
-                MessageBox.Show("Copied to clipboard!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-        };
-        buttonPanel.Controls.Add(_copyRawButton);
-
-        _clearOutputButton = new Guna2Button
-        {
-            Text = "Clear",
-            Location = new Point(190, 5),
-            Size = new Size(120, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(235, 69, 69)
-        };
-        _clearOutputButton.Click += (s, e) => _rawOutputTextBox.Clear();
-        buttonPanel.Controls.Add(_clearOutputButton);
-
-        var generateButtonsLabel = new Guna2Label
-        {
-            Text = "Generate Raw Output:",
-            Location = new Point(350, 12),
-            AutoSize = true
-        };
-        buttonPanel.Controls.Add(generateButtonsLabel);
-
-        var genMsgButton = new Guna2Button
-        {
-            Text = "Message JSON",
-            Location = new Point(480, 5),
-            Size = new Size(130, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(88, 101, 242)
-        };
-        genMsgButton.Click += (s, e) => GenerateMessageJson();
-        buttonPanel.Controls.Add(genMsgButton);
-
-        var genEmbedButton = new Guna2Button
-        {
-            Text = "Embed JSON",
-            Location = new Point(620, 5),
-            Size = new Size(130, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(88, 101, 242)
-        };
-        genEmbedButton.Click += (s, e) => GenerateEmbedJson();
-        buttonPanel.Controls.Add(genEmbedButton);
-
-        var genMdButton = new Guna2Button
-        {
-            Text = "Markdown",
-            Location = new Point(760, 5),
-            Size = new Size(130, 40),
-            BorderRadius = 8,
-            FillColor = Color.FromArgb(88, 101, 242)
-        };
-        genMdButton.Click += (s, e) => GenerateMarkdown();
-        buttonPanel.Controls.Add(genMdButton);
+        var genBtn = new Guna2Button { Text = "Generate JSON", Location = new Point(20, tab.Height - 50), Size = new Size(130, 35), FillColor = Color.FromArgb(88, 101, 242) };
+        genBtn.Click += (s, e) => rawOut.Text = JsonSerializer.Serialize(new { content = msgTxt.Text }, new JsonSerializerOptions { WriteIndented = true });
+        tab.Controls.Add(genBtn);
     }
 
-    private void AddEmbedFieldButton_Click(object? sender, EventArgs e)
+    private async void Connect(object? sender, EventArgs e)
     {
-        var fieldPanel = new Guna2Panel
+        token = tokenTxt.Text.Trim();
+        if (!ulong.TryParse(channelTxt.Text.Trim(), out channelId) || string.IsNullOrEmpty(token))
         {
-            Size = new Size(380, 80),
-            BorderStyle = BorderStyle.FixedSingle,
-            Margin = new Padding(0, 5, 0, 5),
-            Tag = _embedFields.Count
-        };
-
-        var nameBox = new Guna2TextBox
-        {
-            Location = new Point(5, 5),
-            Size = new Size(370, 30),
-            PlaceholderText = "Field name..."
-        };
-        fieldPanel.Controls.Add(nameBox);
-
-        var valueBox = new Guna2TextBox
-        {
-            Location = new Point(5, 40),
-            Size = new Size(280, 30),
-            PlaceholderText = "Field value..."
-        };
-        fieldPanel.Controls.Add(valueBox);
-
-        var inlineCheck = new Guna2CheckBox
-        {
-            Text = "Inline",
-            Location = new Point(290, 42),
-            Checked = true
-        };
-        fieldPanel.Controls.Add(inlineCheck);
-
-        _embedFieldsPanel.Controls.Add(fieldPanel);
-        _embedFields.Add(new EmbedField());
-    }
-
-    private void PreviewEmbedButton_Click(object? sender, EventArgs e)
-    {
-        var embed = BuildEmbed();
-        
-        var sb = new StringBuilder();
-        sb.AppendLine("═══════════════════════════════════════");
-        sb.AppendLine("           EMBED PREVIEW               ");
-        sb.AppendLine("═══════════════════════════════════════");
-        
-        if (!string.IsNullOrEmpty(embed.Author?.Name))
-        {
-            sb.AppendLine($"Author: {embed.Author.Name}");
-            sb.AppendLine(new string('─', 40));
-        }
-        
-        if (!string.IsNullOrEmpty(embed.Title))
-        {
-            sb.AppendLine($"**{embed.Title}**");
-        }
-        
-        if (!string.IsNullOrEmpty(embed.Description))
-        {
-            sb.AppendLine(embed.Description);
-        }
-        
-        if (embed.Fields.Count > 0)
-        {
-            sb.AppendLine();
-            foreach (var field in embed.Fields)
-            {
-                sb.AppendLine($"**{field.Name}**");
-                sb.AppendLine(field.Value);
-                sb.AppendLine();
-            }
-        }
-        
-        if (!string.IsNullOrEmpty(embed.Footer?.Text))
-        {
-            sb.AppendLine();
-            sb.AppendLine(new string('─', 40));
-            sb.AppendLine(embed.Footer.Text);
-        }
-        
-        _rawOutputTextBox.Text = sb.ToString();
-    }
-
-    private async void ConnectButton_Click(object? sender, EventArgs e)
-    {
-        var token = _botTokenTextBox.Text.Trim();
-        var channelIdStr = _channelIdTextBox.Text.Trim();
-        
-        if (string.IsNullOrEmpty(token))
-        {
-            MessageBox.Show("Please enter a bot token.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show("Enter valid token and channel ID");
             return;
         }
-        
-        if (string.IsNullOrEmpty(channelIdStr) || !ulong.TryParse(channelIdStr, out var channelId))
-        {
-            MessageBox.Show("Please enter a valid channel ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        
+
         try
         {
-            _connectButton.Enabled = false;
-            _connectionStatusLabel.Text = "Connecting...";
-            _connectionStatusLabel.ForeColor = Color.Yellow;
+            http.DefaultRequestHeaders.Clear();
+            http.DefaultRequestHeaders.Add("Authorization", $"Bot {token}");
+            var r = await http.GetAsync($"https://discord.com/api/v10/channels/{channelId}");
             
-            _discordClient = new DiscordClient(token, channelId);
-            await _discordClient.ConnectAsync();
-            
-            _connectionStatusLabel.Text = "Connected";
-            _connectionStatusLabel.ForeColor = Color.Green;
-            _disconnectButton.Enabled = true;
-            _connectButton.Enabled = false;
-            
-            MessageBox.Show("Successfully connected to Discord!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (r.IsSuccessStatusCode)
+            {
+                connected = true;
+                statusLbl.Text = "Connected";
+                statusLbl.ForeColor = Color.Green;
+                connectBtn.Enabled = false;
+                disconnectBtn.Enabled = true;
+            }
+            else
+            {
+                MessageBox.Show("Connection failed");
+            }
         }
         catch (Exception ex)
         {
-            _connectionStatusLabel.Text = "Connection Failed";
-            _connectionStatusLabel.ForeColor = Color.Red;
-            _connectButton.Enabled = true;
-            MessageBox.Show($"Failed to connect: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"Error: {ex.Message}");
         }
     }
 
-    private async void DisconnectButton_Click(object? sender, EventArgs e)
+    private async void Disconnect(object? sender, EventArgs e)
     {
-        if (_discordClient != null)
-        {
-            await _discordClient.DisconnectAsync();
-            _discordClient = null;
-        }
-        
-        _connectionStatusLabel.Text = "Not Connected";
-        _connectionStatusLabel.ForeColor = Color.Gray;
-        _disconnectButton.Enabled = false;
-        _connectButton.Enabled = true;
+        connected = false;
+        statusLbl.Text = "Not Connected";
+        statusLbl.ForeColor = Color.Gray;
+        connectBtn.Enabled = true;
+        disconnectBtn.Enabled = false;
+        await Task.CompletedTask;
     }
 
-    private async void SendMessageButton_Click(object? sender, EventArgs e)
+    private async void SendMessage(object? sender, EventArgs e)
     {
-        if (_discordClient == null || !_discordClient.IsConnected)
-        {
-            MessageBox.Show("Please connect to Discord first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
+        if (!connected) { MessageBox.Show("Connect first!"); return; }
         
-        var content = _messageContentTextBox.Text;
-        if (string.IsNullOrWhiteSpace(content))
-        {
-            MessageBox.Show("Please enter a message.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
+        var pay = JsonSerializer.Serialize(new { content = msgTxt.Text });
+        var c = new StringContent(pay, Encoding.UTF8, "application/json");
+        var r = await http.PostAsync($"https://discord.com/api/v10/channels/{channelId}/messages", c);
         
-        try
-        {
-            await _discordClient.SendMessageAsync(content);
-            MessageBox.Show("Message sent successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Failed to send message: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        if (r.IsSuccessStatusCode)
+            MessageBox.Show("Sent!");
+        else
+            MessageBox.Show($"Failed: {await r.Content.ReadAsStringAsync()}");
     }
 
-    private async void SendEmbedButton_Click(object? sender, EventArgs e)
+    private async void SendEmbed(object? sender, EventArgs e)
     {
-        if (_discordClient == null || !_discordClient.IsConnected)
-        {
-            MessageBox.Show("Please connect to Discord first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        
-        try
-        {
-            var embed = BuildEmbed();
-            await _discordClient.SendEmbedAsync(embed);
-            MessageBox.Show("Embed sent successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Failed to send embed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
+        if (!connected) { MessageBox.Show("Connect first!"); return; }
 
-    private async void SendImageButton_Click(object? sender, EventArgs e)
-    {
-        if (_discordClient == null || !_discordClient.IsConnected)
+        var emb = new Dictionary<string, object?>
         {
-            MessageBox.Show("Please connect to Discord first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        
-        var imageUrl = _imageUrlTextBox.Text.Trim();
-        if (string.IsNullOrEmpty(imageUrl))
-        {
-            MessageBox.Show("Please enter an image URL or select a file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        
-        try
-        {
-            await _discordClient.SendImageAsync(imageUrl, _imageCaptionTextBox.Text);
-            MessageBox.Show("Image sent successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Failed to send image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    private void LoadImageButton_Click(object? sender, EventArgs e)
-    {
-        using var dialog = new OpenFileDialog
-        {
-            Filter = "Image files|*.jpg;*.jpeg;*.png;*.gif;*.webp;*.bmp|All files|*.*",
-            Title = "Select an image"
+            ["title"] = embedTitle.Text,
+            ["description"] = embedDesc.Text,
+            ["color"] = embedColor.Color.ToArgb(),
+            ["footer"] = string.IsNullOrEmpty(embedFooter.Text) ? null : new { text = embedFooter.Text },
+            ["author"] = string.IsNullOrEmpty(embedAuthor.Text) ? null : new { name = embedAuthor.Text }
         };
-        
-        if (dialog.ShowDialog() == DialogResult.OK)
-        {
-            try
-            {
-                _imagePreviewBox.ImageLocation = dialog.FileName;
-                _imageUrlTextBox.Text = dialog.FileName;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to load image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+
+        var pay = JsonSerializer.Serialize(new { embeds = new[] { emb } });
+        var c = new StringContent(pay, Encoding.UTF8, "application/json");
+        var r = await http.PostAsync($"https://discord.com/api/v10/channels/{channelId}/messages", c);
+
+        if (r.IsSuccessStatusCode)
+            MessageBox.Show("Embed sent!");
+        else
+            MessageBox.Show($"Failed: {await r.Content.ReadAsStringAsync()}");
     }
 
-    private void LoadImagePreview()
+    private async void SendImage(object? sender, EventArgs e)
     {
-        if (!string.IsNullOrEmpty(_imageUrlTextBox.Text))
-        {
-            try
-            {
-                _imagePreviewBox.LoadAsync(_imageUrlTextBox.Text);
-            }
-            catch
-            {
-                _imagePreviewBox.Image = null;
-            }
-        }
+        if (!connected) { MessageBox.Show("Connect first!"); return; }
+
+        var pay = JsonSerializer.Serialize(new { content = imgUrl.Text });
+        var c = new StringContent(pay, Encoding.UTF8, "application/json");
+        var r = await http.PostAsync($"https://discord.com/api/v10/channels/{channelId}/messages", c);
+
+        if (r.IsSuccessStatusCode)
+            MessageBox.Show("Image sent!");
+        else
+            MessageBox.Show($"Failed: {await r.Content.ReadAsStringAsync()}");
     }
 
-    private void ThemeComboBox_SelectedIndexChanged(object? sender, EventArgs e)
+    private void ApplyTheme(string name)
     {
-        _currentTheme = _themeComboBox.SelectedItem?.ToString() ?? "Dark";
-        ApplyTheme(_currentTheme);
-    }
-
-    private void ApplyTheme(string themeName)
-    {
-        Color bgColor, fgColor, panelColor, accentColor;
-        
-        switch (themeName)
+        Color bg, fg, side;
+        switch (name)
         {
-            case "Light":
-                bgColor = Color.FromArgb(255, 255, 255);
-                fgColor = Color.FromArgb(30, 30, 30);
-                panelColor = Color.FromArgb(245, 245, 245);
-                accentColor = Color.FromArgb(88, 101, 242);
-                break;
-            case "Midnight":
-                bgColor = Color.FromArgb(20, 20, 40);
-                fgColor = Color.FromArgb(200, 200, 220);
-                panelColor = Color.FromArgb(30, 30, 60);
-                accentColor = Color.FromArgb(138, 180, 248);
-                break;
-            case "Ocean":
-                bgColor = Color.FromArgb(10, 30, 50);
-                fgColor = Color.FromArgb(180, 210, 230);
-                panelColor = Color.FromArgb(20, 50, 80);
-                accentColor = Color.FromArgb(0, 150, 200);
-                break;
-            case "Forest":
-                bgColor = Color.FromArgb(20, 35, 20);
-                fgColor = Color.FromArgb(200, 220, 200);
-                panelColor = Color.FromArgb(30, 50, 30);
-                accentColor = Color.FromArgb(80, 160, 80);
-                break;
-            default:
-                bgColor = Color.FromArgb(30, 30, 30);
-                fgColor = Color.FromArgb(220, 220, 220);
-                panelColor = Color.FromArgb(40, 40, 40);
-                accentColor = Color.FromArgb(88, 101, 242);
-                break;
+            case "Light": bg = Color.White; fg = Color.Black; side = Color.FromArgb(245, 245, 245); break;
+            case "Midnight": bg = Color.FromArgb(20, 20, 40); fg = Color.FromArgb(200, 200, 220); side = Color.FromArgb(30, 30, 60); break;
+            case "Ocean": bg = Color.FromArgb(10, 30, 50); fg = Color.FromArgb(180, 210, 230); side = Color.FromArgb(20, 50, 80); break;
+            case "Forest": bg = Color.FromArgb(20, 35, 20); fg = Color.FromArgb(200, 220, 200); side = Color.FromArgb(30, 50, 30); break;
+            default: bg = Color.FromArgb(30, 30, 30); fg = Color.White; side = Color.FromArgb(40, 40, 40); break;
         }
-        
-        this.BackColor = bgColor;
-        this.ForeColor = fgColor;
-        
-        _sidebarPanel.BackColor = panelColor;
-        _mainPanel.BackColor = bgColor;
-        
-        UpdateControlThemeRecursive(this, panelColor, accentColor);
-    }
-
-    private void UpdateControlThemeRecursive(Control ctrl, Color panelColor, Color accentColor)
-    {
-        foreach (Control child in ctrl.Controls)
-        {
-            if (child is Guna2Panel panel)
-            {
-                panel.FillColor = panelColor;
-            }
-            else if (child is Guna2Label label)
-            {
-                label.ForeColor = this.ForeColor;
-            }
-            
-            if (child.HasChildren)
-            {
-                UpdateControlThemeRecursive(child, panelColor, accentColor);
-            }
-        }
-    }
-
-    private Embed BuildEmbed()
-    {
-        var embed = new Embed
-        {
-            Title = _embedTitleTextBox.Text,
-            Description = _embedDescriptionTextBox.Text,
-            Url = _embedUrlTextBox.Text,
-            Color = _embedColorPicker.Color.ToArgb(),
-            Timestamp = _embedTimestampPicker.Value
-        };
-        
-        if (!string.IsNullOrEmpty(_embedAuthorTextBox.Text))
-        {
-            embed.Author = new EmbedAuthor
-            {
-                Name = _embedAuthorTextBox.Text,
-                IconUrl = _embedAuthorIconTextBox.Text
-            };
-        }
-        
-        if (!string.IsNullOrEmpty(_embedFooterTextBox.Text))
-        {
-            embed.Footer = new EmbedFooter
-            {
-                Text = _embedFooterTextBox.Text,
-                IconUrl = _embedFooterIconTextBox.Text
-            };
-        }
-        
-        if (!string.IsNullOrEmpty(_embedThumbnailUrlTextBox.Text))
-        {
-            embed.Thumbnail = new EmbedImage { Url = _embedThumbnailUrlTextBox.Text };
-        }
-        
-        if (!string.IsNullOrEmpty(_embedImageUrlTextBox.Text))
-        {
-            embed.Image = new EmbedImage { Url = _embedImageUrlTextBox.Text };
-        }
-        
-        int fieldIndex = 0;
-        foreach (Control ctrl in _embedFieldsPanel.Controls)
-        {
-            if (ctrl is Guna2Panel fieldPanel && fieldIndex < _embedFields.Count)
-            {
-                string? name = null, value = null;
-                bool inline = true;
-                
-                foreach (Control child in fieldPanel.Controls)
-                {
-                    if (child is Guna2TextBox textBox)
-                    {
-                        var tag = textBox.Tag?.ToString();
-                        if (tag == "name") name = textBox.Text;
-                        else if (tag == "value") value = textBox.Text;
-                    }
-                    else if (child is Guna2CheckBox checkBox && checkBox.Text == "Inline")
-                    {
-                        inline = checkBox.Checked;
-                    }
-                }
-                
-                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(value))
-                {
-                    embed.Fields.Add(new EmbedField { Name = name, Value = value, Inline = inline });
-                }
-                fieldIndex++;
-            }
-        }
-        
-        return embed;
-    }
-
-    private void GenerateMessageJson()
-    {
-        var json = JsonConvert.SerializeObject(
-            new { content = _messageContentTextBox.Text },
-            Formatting.Indented
-        );
-        _rawOutputTextBox.Text = json;
-    }
-
-    private void GenerateEmbedJson()
-    {
-        var embed = BuildEmbed();
-        var json = JsonConvert.SerializeObject(
-            new { embeds = new[] { embed } },
-            Formatting.Indented
-        );
-        _rawOutputTextBox.Text = json;
-    }
-
-    private void GenerateMarkdown()
-    {
-        _rawOutputTextBox.Text = _messageContentTextBox.Text;
+        this.BackColor = bg;
+        this.ForeColor = fg;
+        mainP.FillColor = bg;
+        sidebar.FillColor = side;
     }
 
     [STAThread]
