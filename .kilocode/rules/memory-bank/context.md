@@ -1,10 +1,10 @@
-# Active Context: Next.js Starter Template
+# Active Context: Discord Message & Embed Tool
 
 ## Current State
 
-**Template Status**: ✅ Ready for development
+**Project Status**: ✅ Complete
 
-The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. It's ready for AI-assisted expansion to build any type of application.
+Created a Windows Forms desktop application in Visual Studio 2022 with Guna2 UI framework for Discord message/embed creation and sending.
 
 ## Recently Completed
 
@@ -14,9 +14,11 @@ The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. I
 - [x] ESLint configuration
 - [x] Memory bank documentation
 - [x] Recipe system for common features
+- [x] **Discord Tool - Windows Forms app with Guna2**
 
 ## Current Structure
 
+### Next.js Web Project (`src/`)
 | File/Directory | Purpose | Status |
 |----------------|---------|--------|
 | `src/app/page.tsx` | Home page | ✅ Ready |
@@ -24,49 +26,55 @@ The template is a clean Next.js 16 starter with TypeScript and Tailwind CSS 4. I
 | `src/app/globals.css` | Global styles | ✅ Ready |
 | `.kilocode/` | AI context & recipes | ✅ Ready |
 
+### Discord Tool Desktop App (`DiscordTool/`)
+| File/Directory | Purpose | Status |
+|----------------|---------|--------|
+| `DiscordTool.sln` | VS Solution | ✅ Ready |
+| `DiscordTool/DiscordTool.csproj` | Project file with Guna2 | ✅ Ready |
+| `DiscordTool/MainForm.cs` | Main UI form | ✅ Complete |
+| `DiscordTool/Discord/DiscordClient.cs` | Discord API client | ✅ Complete |
+| `DiscordTool/Discord/DiscordMarkdown.cs` | Markdown formatter | ✅ Complete |
+| `DiscordTool/appsettings.json` | App configuration | ✅ Ready |
+
 ## Current Focus
 
-The template is ready. Next steps depend on user requirements:
+Desktop Application: Discord Message & Embed Tool
 
-1. What type of application to build
-2. What features are needed
-3. Design/branding preferences
+### Discord Tool Features:
+- **Message Tab**: Send plain messages with Discord Markdown formatting
+- **Embed Builder Tab**: Create rich embeds with title, description, author, footer, images, fields
+- **Image Tab**: Send images with captions
+- **Raw Output Tab**: View generated JSON/Markdown
+- **Themes**: Dark, Light, Midnight, Ocean, Forest themes
+- **Formatting**: Bold, Italic, Underline, Strikethrough, Spoilers, Code, Headers, Lists, Block quotes, Links
 
 ## Quick Start Guide
 
-### To add a new page:
+### To run the Discord Tool:
 
-Create a file at `src/app/[route]/page.tsx`:
-```tsx
-export default function NewPage() {
-  return <div>New page content</div>;
-}
-```
+1. Open `DiscordTool.sln` in Visual Studio 2022
+2. Restore NuGet packages (Guna2.UI.WinForms, DSharpPlus, Newtonsoft.Json)
+3. Build and run the application
+4. Enter your Discord bot token and channel ID
+5. Connect and start sending messages/embeds
 
-### To add components:
-
-Create `src/components/` directory and add components:
-```tsx
-// src/components/ui/Button.tsx
-export function Button({ children }: { children: React.ReactNode }) {
-  return <button className="px-4 py-2 bg-blue-600 text-white rounded">{children}</button>;
-}
-```
-
-### To add a database:
-
-Follow `.kilocode/recipes/add-database.md`
-
-### To add API routes:
-
-Create `src/app/api/[route]/route.ts`:
-```tsx
-import { NextResponse } from "next/server";
-
-export async function GET() {
-  return NextResponse.json({ message: "Hello" });
-}
-```
+### Discord Markdown Supported:
+| Format | Syntax |
+|--------|--------|
+| Bold | `**text**` |
+| Italic | `*text*` |
+| Bold Italic | `***text***` |
+| Underline | `__text__` |
+| Strikethrough | `~~text~~` |
+| Spoiler | `||text||` |
+| Header 1 | `# text` |
+| Header 2 | `## text` |
+| Header 3 | `### text` |
+| Block Quote | `> text` |
+| Code | `` `code` `` |
+| Code Block | ` ``` ``` ` |
+| Link | `[text](url)` |
+| List | `- item` |
 
 ## Available Recipes
 
